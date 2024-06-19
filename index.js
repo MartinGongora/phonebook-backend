@@ -1,13 +1,16 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
+const Person = require('./models/person')
 
 app.use(express.json())
 app.use(express.static('dist'))
 app.use(cors())
 app.use(morgan('tiny'))
 
+//Esto no se usa
 let persons = [
     { 
         "id": 1,
@@ -32,9 +35,12 @@ let persons = [
 ]
   
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Person.find({}).then(persons => {
+      response.json(persons)
+    })
 })
 
+//Este no se usa
 app.get('/api/persons/:id', (request, response) => {
   const id = Number(request.params.id)
   const person = persons.find(person => person.id === id)
@@ -45,6 +51,7 @@ app.get('/api/persons/:id', (request, response) => {
   }
 })
 
+//Este no se usa
 app.get('/info', (request, response) => {
     const date = new Date()
     response.send(`<p>Phonebook has info for ${persons.length} people</p>
@@ -52,42 +59,36 @@ app.get('/info', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-  
+  const id = request.params.id
+  Person.findByIdAndDelete(id).then(person => {
     response.status(204).end()
+  })
 })
 
-const generateId = () => {
-    min = Math.ceil(0)
-    max = Math.floor(100000000)
-    return Math.floor(Math.random() * (max - min) + min)
-}
 
 app.post('/api/persons', (request, response) => {
-    const body = request.body
-  
-    if (!body.name || !body.number) {
-      return response.status(400).json({ 
-        error: 'name or number missing' 
-      })
-    }
+  const body = request.body
 
-    if (persons.some(person => person.name === body.name)){
-        return response.status(400).json({ 
-            error: 'name must be unique' 
-        })
-    }
-  
-    const person = {
-      name: body.name,
-      number: body.number,
-      id: generateId(),
-    }
-  
-    persons = persons.concat(person)
-  
-    response.json(person)
+  if (!body.name || !body.number) {
+    return response.status(400).json({ 
+      error: 'name or number missing' 
+    })
+  }
+
+  if (persons.some(person => person.name === body.name)){
+      return response.status(400).json({ 
+          error: 'name must be unique' 
+      })
+  }
+
+  const person = new Person({
+    name: body.name,
+    number: body.number
+  })
+
+  person.save().then(savedPerson => {
+    response.json(savedPerson)
+  })
 })
 
 const unknownEndpoint = (request, response) => {
@@ -96,7 +97,7 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint)
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
