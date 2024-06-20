@@ -25,7 +25,11 @@ const personSchema = new mongoose.Schema({
   },
   number: {
     type: String,
-    required: true
+    required: true,
+    minLength: 8,
+    validate: (v) => {
+      return /^\d{2,3}-\d+$/.test(v);
+    }
   },
 })
   
