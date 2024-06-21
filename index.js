@@ -10,7 +10,7 @@ app.use(express.static('dist'))
 app.use(cors())
 app.use(morgan('tiny'))
 
-  
+
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {
       response.json(persons)
@@ -66,8 +66,8 @@ app.put('/api/persons/:id', (request, response, next) => {
   const { name, number } = request.body
 
   Person.findByIdAndUpdate(
-    request.params.id, 
-    { name, number }, 
+    request.params.id,
+    { name, number },
     { new: true, runValidators: true, context: 'query' }
   )
     .then(updatedPerson => {
